@@ -1,14 +1,24 @@
 defmodule Ensul do
   use Application
 
-  # See http://elixir-lang.org/docs/stable/elixir/Application.html
-  # for more information on OTP Applications
+  alias Ensul.StackServer
+
+  defmacro __using__(_) do
+    quote do
+      use ExUnit.Case
+      import Ensul.DSL
+    end
+  end
+
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
+
+    ets = :ets.new(:repo, [:set, :public, :named_table, {:read_concurrency, true}])
 
     children = [
       # Define workers and child supervisors to be supervised
       # worker(Ensul.Worker, [arg1, arg2, arg3])
+      worker(StackServer, [])
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html
