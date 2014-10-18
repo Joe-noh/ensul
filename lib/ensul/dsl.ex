@@ -4,9 +4,9 @@ defmodule Ensul.DSL do
   |> Enum.each fn (macro_name) ->
     defmacro unquote(macro_name)(desc, do: block) do
       quote do
-        Ensul.StackServer.push(unquote desc)
+        Ensul.ContextManager.push_description(unquote desc)
         unquote(block)
-        Ensul.StackServer.pop
+        Ensul.ContextManager.pop_description
       end
     end
   end
@@ -15,11 +15,11 @@ defmodule Ensul.DSL do
   |> Enum.each fn (macro_name) ->
     defmacro unquote(macro_name)(desc, do: block) do
       quote do
-        Ensul.StackServer.push(unquote desc)
-        test Ensul.StackServer.cat() do
+        Ensul.ContextManager.push_description(unquote desc)
+        test Ensul.ContextManager.dump_description() do
           unquote(block)
         end
-        Ensul.StackServer.pop
+        Ensul.ContextManager.pop_description
       end
     end
   end

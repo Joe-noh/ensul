@@ -6,12 +6,12 @@ defmodule DSLTest do
   import TestHelper
 
   test "describe" do
-    expanded = macro_to_code(D.describe "something", do: "hey")
+    expanded = macro_to_code(D.describe "it", do: "is")
 
     assert expanded =~ """
-      Ensul.StackServer.push("something")
-      "hey"
-      Ensul.StackServer.pop()
+      Ensul.ContextManager.push_description("it")
+      "is"
+      Ensul.ContextManager.pop_description()
     """
   end
 
@@ -19,11 +19,11 @@ defmodule DSLTest do
     expanded = macro_to_code(D.it "behave", do: "like this")
 
     assert expanded =~ """
-      Ensul.StackServer.push("behave")
-      test(Ensul.StackServer.cat()) do
+      Ensul.ContextManager.push_description("behave")
+      test(Ensul.ContextManager.dump_description()) do
         "like this"
       end
-      Ensul.StackServer.pop()
+      Ensul.ContextManager.pop_description()
     """
   end
 

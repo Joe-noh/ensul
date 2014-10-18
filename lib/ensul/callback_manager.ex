@@ -1,0 +1,48 @@
+defmodule Ensul.ContextManager do
+  use GenServer
+  alias __MODULE__, as: CM
+
+  defstruct callback_table: nil, desc_stack: []
+
+  @global_name {:global, CM}
+
+  def start_link(ets_table_name) do
+    GenServer.start_link(CM, [ets_table_name], name: @global_name)
+  end
+
+  def push_description(item) do
+    GenServer.cast(@global_name, {:push_desc, item})
+  end
+
+  def pop_description do
+    GenServer.call(@global_name, :pop_desc)
+  end
+
+  def dump_description do
+    GenServer.call(@global_name, :dump_desc)
+  end
+
+
+  # GenServer callback functions
+
+  def init(table_name) do
+    {:ok, %__MODULE__{callback_table: table_name}}
+  end
+
+  def handle_cast({:push_desc, item}, state = %CM{desc_stack: stack}) do
+    {:noreply, %CM{state | desc_stack: [item | stack]}}
+  end
+
+  def handle_call(:pop_desc, _from, state = %CM{desc_stack: []}) do
+    {:reply, nil, state}
+  end
+
+  def handle_call(:pop_desc, _from, state = %CM{desc_stack: [head | rest]}) do
+    {:reply, head, %CM{state | desc_stack: rest}}
+  end
+
+  def handle_call(:dump_desc, _from, state = %CM{desc_stack: stack}) do
+    message = stack |> Enum.reverse |> Enum.join(" ")
+    {:reply, message, state}
+  end
+end
