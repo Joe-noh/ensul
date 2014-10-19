@@ -12,7 +12,7 @@ defmodule Ensul do
     import Supervisor.Spec, warn: false
 
     ets_config = [:set, :public, :named_table, {:read_concurrency, true}]
-    ets = :ets.new(ets_name, ets_config)
+    :ets.new(ets_name, ets_config)
 
     children = [
       # Define workers and child supervisors to be supervised
