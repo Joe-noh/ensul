@@ -25,6 +25,18 @@ defmodule DSLTest do
       Ensul.ContextManager.push_description("it")
       "is"
       Ensul.ContextManager.pop_description()
+      case(Ensul.ContextManager.fetch_callback(:after_each)) do
+        nil ->
+          nil
+        callback ->
+          callback.()
+      end
+      case(Ensul.ContextManager.fetch_callback(:after_all)) do
+        nil ->
+          nil
+        callback ->
+          callback.()
+      end
     """
   end
 
@@ -43,6 +55,12 @@ defmodule DSLTest do
         "like this"
       end
       Ensul.ContextManager.pop_description()
+      case(Ensul.ContextManager.fetch_callback(:after_each)) do
+        nil ->
+          nil
+        callback ->
+          callback.()
+      end
     """
   end
 

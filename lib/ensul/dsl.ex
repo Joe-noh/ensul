@@ -18,6 +18,11 @@ defmodule Ensul.DSL do
         unquote(block)
         Ensul.ContextManager.pop_description
 
+        case Ensul.ContextManager.fetch_callback(:after_each) do
+          nil -> nil
+          callback -> callback.()
+        end
+
         case Ensul.ContextManager.fetch_callback(:after_all) do
           nil -> nil
           callback -> callback.()
@@ -40,6 +45,11 @@ defmodule Ensul.DSL do
           unquote(block)
         end
         Ensul.ContextManager.pop_description
+
+        case Ensul.ContextManager.fetch_callback(:after_each) do
+          nil -> nil
+          callback -> callback.()
+        end
       end
     end
   end
@@ -59,6 +69,12 @@ defmodule Ensul.DSL do
   defmacro before_each(block) do
     quote do
       Ensul.ContextManager.set_callback(:before_each, unquote(block))
+    end
+  end
+
+  defmacro after_each(block) do
+    quote do
+      Ensul.ContextManager.set_callback(:after_each, unquote(block))
     end
   end
 end
