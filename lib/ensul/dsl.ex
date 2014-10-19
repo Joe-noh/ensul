@@ -9,6 +9,11 @@ defmodule Ensul.DSL do
           callback -> callback.()
         end
 
+        case Ensul.ContextManager.fetch_callback(:before_each) do
+          nil -> nil
+          callback -> callback.()
+        end
+
         Ensul.ContextManager.push_description(unquote desc)
         unquote(block)
         Ensul.ContextManager.pop_description
@@ -25,6 +30,11 @@ defmodule Ensul.DSL do
   |> Enum.each fn (macro_name) ->
     defmacro unquote(macro_name)(desc, do: block) do
       quote do
+        case Ensul.ContextManager.fetch_callback(:before_each) do
+          nil -> nil
+          callback -> callback.()
+        end
+
         Ensul.ContextManager.push_description(unquote desc)
         test Ensul.ContextManager.dump_description() do
           unquote(block)
@@ -43,6 +53,12 @@ defmodule Ensul.DSL do
   defmacro after_all(block) do
     quote do
       Ensul.ContextManager.set_callback(:after_all, unquote(block))
+    end
+  end
+
+  defmacro before_each(block) do
+    quote do
+      Ensul.ContextManager.set_callback(:before_each, unquote(block))
     end
   end
 end

@@ -6,12 +6,22 @@ defmodule DSLTest do
   require D
   import TestHelper
 
-  CM.reset
-
   test "describe" do
     expanded = macro_to_code(D.describe "it", do: "is")
 
     assert expanded =~ """
+      case(Ensul.ContextManager.fetch_callback(:before_all)) do
+        nil ->
+          nil
+        callback ->
+          callback.()
+      end
+      case(Ensul.ContextManager.fetch_callback(:before_each)) do
+        nil ->
+          nil
+        callback ->
+          callback.()
+      end
       Ensul.ContextManager.push_description("it")
       "is"
       Ensul.ContextManager.pop_description()
@@ -22,6 +32,12 @@ defmodule DSLTest do
     expanded = macro_to_code(D.it "behave", do: "like this")
 
     assert expanded =~ """
+      case(Ensul.ContextManager.fetch_callback(:before_each)) do
+        nil ->
+          nil
+        callback ->
+          callback.()
+      end
       Ensul.ContextManager.push_description("behave")
       test(Ensul.ContextManager.dump_description()) do
         "like this"
@@ -49,6 +65,8 @@ defmodule DSLTest do
   end
 
   test "before_all" do
+    CM.reset
+
     expected1 = fn -> 1+1 end
     D.before_all expected1
 
@@ -63,6 +81,8 @@ defmodule DSLTest do
   end
 
   test "after_all" do
+    CM.reset
+
     expected1 = fn -> 1+1 end
     D.after_all expected1
 
