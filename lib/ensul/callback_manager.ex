@@ -26,8 +26,16 @@ defmodule Ensul.ContextManager do
     GenServer.call(@global_name, :fetch_ba)
   end
 
+  def fetch_callback(:after_all) do
+    GenServer.call(@global_name, :fetch_aa)
+  end
+
   def set_callback(:before_all, function) do
     GenServer.cast(@global_name, {:set_ba, function})
+  end
+
+  def set_callback(:after_all, function) do
+    GenServer.cast(@global_name, {:set_aa, function})
   end
 
   # GenServer callback functions
@@ -46,6 +54,12 @@ defmodule Ensul.ContextManager do
     {:noreply, state}
   end
 
+  def handle_cast({:set_aa, function}, state = %CM{callback_table: table}) do
+    key = {:after_all, concat_desc(state)}
+    :ets.insert(table, {key, function})
+    {:noreply, state}
+  end
+
   def handle_call(:pop_desc, _from, state = %CM{desc_stack: []}) do
     {:reply, nil, state}
   end
@@ -60,6 +74,13 @@ defmodule Ensul.ContextManager do
 
   def handle_call(:fetch_ba, _from, state = %CM{callback_table: table}) do
     case :ets.lookup(table, {:before_all, concat_desc(state)}) do
+      [] -> {:reply, nil, state}
+      [{_, callback}] -> {:reply, callback, state}
+    end
+  end
+
+  def handle_call(:fetch_aa, _from, state = %CM{callback_table: table}) do
+    case :ets.lookup(table, {:after_all, concat_desc(state)}) do
       [] -> {:reply, nil, state}
       [{_, callback}] -> {:reply, callback, state}
     end

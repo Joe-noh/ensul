@@ -59,4 +59,18 @@ defmodule DSLTest do
 
     assert expected1 == CM.fetch_callback(:before_all)
   end
+
+  test "after_all" do
+    expected1 = fn -> 1+1 end
+    D.after_all expected1
+
+    D.describe "something" do
+      expected2 = fn -> 2+2 end
+      D.after_all expected2
+
+      assert expected2 == CM.fetch_callback(:after_all)
+    end
+
+    assert expected1 == CM.fetch_callback(:after_all)
+  end
 end

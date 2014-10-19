@@ -13,10 +13,10 @@ defmodule Ensul.DSL do
         unquote(block)
         Ensul.ContextManager.pop_description
 
-        #case Ensul.ContextManager.fetch_callback(:after_all) do
-          #  nil -> nil
-          #callback -> callback.()
-          #end
+        case Ensul.ContextManager.fetch_callback(:after_all) do
+          nil -> nil
+          callback -> callback.()
+        end
       end
     end
   end
@@ -37,6 +37,12 @@ defmodule Ensul.DSL do
   defmacro before_all(block) do
     quote do
       Ensul.ContextManager.set_callback(:before_all, unquote(block))
+    end
+  end
+
+  defmacro after_all(block) do
+    quote do
+      Ensul.ContextManager.set_callback(:after_all, unquote(block))
     end
   end
 end
