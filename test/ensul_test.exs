@@ -10,6 +10,14 @@ defmodule EnsulTest do
   end
 
   describe "Ensul" do
+    before_each fn ->
+      IO.puts "before each"
+    end
+
+    after_each fn ->
+      IO.puts "after each"
+    end
+
     it "can write tests like this" do
       assert 1+1 == 2
     end

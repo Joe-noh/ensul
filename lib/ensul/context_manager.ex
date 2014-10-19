@@ -30,12 +30,28 @@ defmodule Ensul.ContextManager do
     GenServer.call(@global_name, :fetch_aa)
   end
 
+  def fetch_callback(:before_each) do
+    GenServer.call(@global_name, :fetch_be)
+  end
+
+  def fetch_callback(:after_each) do
+    GenServer.call(@global_name, :fetch_ae)
+  end
+
   def set_callback(:before_all, function) do
     GenServer.cast(@global_name, {:set_ba, function})
   end
 
   def set_callback(:after_all, function) do
     GenServer.cast(@global_name, {:set_aa, function})
+  end
+
+  def set_callback(:before_each, function) do
+    GenServer.cast(@global_name, {:set_be, function})
+  end
+
+  def set_callback(:after_each, function) do
+    GenServer.cast(@global_name, {:set_ae, function})
   end
 
   def reset do
@@ -60,6 +76,18 @@ defmodule Ensul.ContextManager do
 
   def handle_cast({:set_aa, function}, state = %CM{callback_table: table}) do
     key = {:after_all, concat_desc(state)}
+    :ets.insert(table, {key, function})
+    {:noreply, state}
+  end
+
+  def handle_cast({:set_be, function}, state = %CM{callback_table: table}) do
+    key = {:before_each, concat_desc(state)}
+    :ets.insert(table, {key, function})
+    {:noreply, state}
+  end
+
+  def handle_cast({:set_ae, function}, state = %CM{callback_table: table}) do
+    key = {:after_each, concat_desc(state)}
     :ets.insert(table, {key, function})
     {:noreply, state}
   end
@@ -90,6 +118,20 @@ defmodule Ensul.ContextManager do
 
   def handle_call(:fetch_aa, _from, state = %CM{callback_table: table}) do
     case :ets.lookup(table, {:after_all, concat_desc(state)}) do
+      [] -> {:reply, nil, state}
+      [{_, callback}] -> {:reply, callback, state}
+    end
+  end
+
+  def handle_call(:fetch_be, _from, state = %CM{callback_table: table}) do
+    case :ets.lookup(table, {:before_each, concat_desc(state)}) do
+      [] -> {:reply, nil, state}
+      [{_, callback}] -> {:reply, callback, state}
+    end
+  end
+
+  def handle_call(:fetch_ae, _from, state = %CM{callback_table: table}) do
+    case :ets.lookup(table, {:after_each, concat_desc(state)}) do
       [] -> {:reply, nil, state}
       [{_, callback}] -> {:reply, callback, state}
     end
