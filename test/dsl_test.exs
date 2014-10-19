@@ -2,16 +2,17 @@ defmodule DSLTest do
   use ExUnit.Case
 
   alias Ensul.DSL, as: D
+  alias Ensul.ContextManager, as: CM
   require D
   import TestHelper
 
   test "describe" do
-    expanded = macro_to_code(D.describe "something", do: "hey")
+    expanded = macro_to_code(D.describe "it", do: "is")
 
     assert expanded =~ """
-      Ensul.StackServer.push("something")
-      "hey"
-      Ensul.StackServer.pop()
+      Ensul.ContextManager.push_description("it")
+      "is"
+      Ensul.ContextManager.pop_description()
     """
   end
 
@@ -19,11 +20,11 @@ defmodule DSLTest do
     expanded = macro_to_code(D.it "behave", do: "like this")
 
     assert expanded =~ """
-      Ensul.StackServer.push("behave")
-      test(Ensul.StackServer.cat()) do
+      Ensul.ContextManager.push_description("behave")
+      test(Ensul.ContextManager.dump_description()) do
         "like this"
       end
-      Ensul.StackServer.pop()
+      Ensul.ContextManager.pop_description()
     """
   end
 
@@ -43,5 +44,33 @@ defmodule DSLTest do
     assert expanded == macro_to_code(D.make_sure "is", do: "that")
     assert expanded == macro_to_code(D.see_if    "is", do: "that")
     assert expanded == macro_to_code(D.verify    "is", do: "that")
+  end
+
+  test "before_all" do
+    expected1 = fn -> 1+1 end
+    D.before_all expected1
+
+    D.describe "something" do
+      expected2 = fn -> 2+2 end
+      D.before_all expected2
+
+      assert expected2 == CM.fetch_callback(:before_all)
+    end
+
+    assert expected1 == CM.fetch_callback(:before_all)
+  end
+
+  test "after_all" do
+    expected1 = fn -> 1+1 end
+    D.after_all expected1
+
+    D.describe "something" do
+      expected2 = fn -> 2+2 end
+      D.after_all expected2
+
+      assert expected2 == CM.fetch_callback(:after_all)
+    end
+
+    assert expected1 == CM.fetch_callback(:after_all)
   end
 end
