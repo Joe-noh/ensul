@@ -6,6 +6,8 @@ defmodule DSLTest do
   require D
   import TestHelper
 
+  CM.reset
+
   test "describe" do
     expanded = macro_to_code(D.describe "it", do: "is")
 

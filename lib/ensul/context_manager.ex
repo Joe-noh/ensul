@@ -38,6 +38,10 @@ defmodule Ensul.ContextManager do
     GenServer.cast(@global_name, {:set_aa, function})
   end
 
+  def reset do
+    GenServer.cast(@global_name, :reset)
+  end
+
   # GenServer callback functions
 
   def init([table_name]) do
@@ -58,6 +62,11 @@ defmodule Ensul.ContextManager do
     key = {:after_all, concat_desc(state)}
     :ets.insert(table, {key, function})
     {:noreply, state}
+  end
+
+  def handle_cast(:reset, state = %CM{callback_table: table}) do
+    :ets.delete_all_objects(table)
+    {:noreply, %CM{state | desc_stack: []}}
   end
 
   def handle_call(:pop_desc, _from, state = %CM{desc_stack: []}) do
