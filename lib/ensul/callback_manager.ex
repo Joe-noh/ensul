@@ -22,15 +22,28 @@ defmodule Ensul.ContextManager do
     GenServer.call(@global_name, :dump_desc)
   end
 
+  def fetch_callback(:before_all) do
+    GenServer.call(@global_name, :fetch_ba)
+  end
+
+  def set_callback(:before_all, function) do
+    GenServer.cast(@global_name, {:set_ba, function})
+  end
 
   # GenServer callback functions
 
-  def init(table_name) do
+  def init([table_name]) do
     {:ok, %__MODULE__{callback_table: table_name}}
   end
 
   def handle_cast({:push_desc, item}, state = %CM{desc_stack: stack}) do
     {:noreply, %CM{state | desc_stack: [item | stack]}}
+  end
+
+  def handle_cast({:set_ba, function}, state = %CM{callback_table: table}) do
+    key = {:before_all, concat_desc(state)}
+    :ets.insert(table, {key, function})
+    {:noreply, state}
   end
 
   def handle_call(:pop_desc, _from, state = %CM{desc_stack: []}) do
@@ -41,8 +54,20 @@ defmodule Ensul.ContextManager do
     {:reply, head, %CM{state | desc_stack: rest}}
   end
 
-  def handle_call(:dump_desc, _from, state = %CM{desc_stack: stack}) do
-    message = stack |> Enum.reverse |> Enum.join(" ")
-    {:reply, message, state}
+  def handle_call(:dump_desc, _from, state) do
+    {:reply, concat_desc(state), state}
+  end
+
+  def handle_call(:fetch_ba, _from, state = %CM{callback_table: table}) do
+    case :ets.lookup(table, {:before_all, concat_desc(state)}) do
+      [] -> {:reply, nil, state}
+      [{_, callback}] -> {:reply, callback, state}
+    end
+  end
+
+  # private functions
+
+  defp concat_desc(%CM{desc_stack: stack}) do
+    stack |> Enum.reverse |> Enum.join(" ")
   end
 end

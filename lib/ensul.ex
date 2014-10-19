@@ -11,7 +11,6 @@ defmodule Ensul do
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
 
-    ets_name   = :callback_repository
     ets_config = [:set, :public, :named_table, {:read_concurrency, true}]
     ets = :ets.new(ets_name, ets_config)
 
@@ -26,4 +25,6 @@ defmodule Ensul do
     opts = [strategy: :one_for_one, name: Ensul.Supervisor]
     Supervisor.start_link(children, opts)
   end
+
+  def ets_name, do: :callback_repository
 end

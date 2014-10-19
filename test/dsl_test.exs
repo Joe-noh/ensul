@@ -2,6 +2,7 @@ defmodule DSLTest do
   use ExUnit.Case
 
   alias Ensul.DSL, as: D
+  alias Ensul.ContextManager, as: CM
   require D
   import TestHelper
 
@@ -43,5 +44,19 @@ defmodule DSLTest do
     assert expanded == macro_to_code(D.make_sure "is", do: "that")
     assert expanded == macro_to_code(D.see_if    "is", do: "that")
     assert expanded == macro_to_code(D.verify    "is", do: "that")
+  end
+
+  test "before_all" do
+    expected1 = fn -> 1+1 end
+    D.before_all expected1
+
+    D.describe "something" do
+      expected2 = fn -> 2+2 end
+      D.before_all expected2
+
+      assert expected2 == CM.fetch_callback(:before_all)
+    end
+
+    assert expected1 == CM.fetch_callback(:before_all)
   end
 end
