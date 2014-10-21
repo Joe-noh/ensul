@@ -5,6 +5,14 @@ defmodule Ensul.ContextManager do
   defstruct callback_table: nil, desc_stack: []
 
   @global_name {:global, CM}
+  @types_and_fetch_signs [
+    {:before_all,  :fetch_before_all},  {:after_all,  :fetch_after_all},
+    {:before_each, :fetch_before_each}, {:after_each, :fetch_after_each}
+  ]
+  @types_and_set_signs [
+    {:before_all,  :set_before_all},  {:after_all,  :set_after_all},
+    {:before_each, :set_before_each}, {:after_each, :set_after_each}
+  ]
 
   def start_link(ets_table_name) do
     GenServer.start_link(CM, [ets_table_name], name: @global_name)
@@ -22,36 +30,16 @@ defmodule Ensul.ContextManager do
     GenServer.call(@global_name, :dump_desc)
   end
 
-  def fetch_callback(:before_all) do
-    GenServer.call(@global_name, :fetch_ba)
+  Enum.each @types_and_fetch_signs, fn {callback_type, call_sign} ->
+    def fetch_callback(unquote callback_type) do
+      GenServer.call(@global_name, unquote(call_sign))
+    end
   end
 
-  def fetch_callback(:after_all) do
-    GenServer.call(@global_name, :fetch_aa)
-  end
-
-  def fetch_callback(:before_each) do
-    GenServer.call(@global_name, :fetch_be)
-  end
-
-  def fetch_callback(:after_each) do
-    GenServer.call(@global_name, :fetch_ae)
-  end
-
-  def set_callback(:before_all, function) do
-    GenServer.cast(@global_name, {:set_ba, function})
-  end
-
-  def set_callback(:after_all, function) do
-    GenServer.cast(@global_name, {:set_aa, function})
-  end
-
-  def set_callback(:before_each, function) do
-    GenServer.cast(@global_name, {:set_be, function})
-  end
-
-  def set_callback(:after_each, function) do
-    GenServer.cast(@global_name, {:set_ae, function})
+  Enum.each @types_and_set_signs, fn {callback_type, cast_sign} ->
+    def set_callback(unquote(callback_type), function) do
+      GenServer.cast(@global_name, {unquote(cast_sign), function})
+    end
   end
 
   def reset do
@@ -68,28 +56,11 @@ defmodule Ensul.ContextManager do
     {:noreply, %CM{state | desc_stack: [item | stack]}}
   end
 
-  def handle_cast({:set_ba, function}, state = %CM{callback_table: table}) do
-    key = {:before_all, concat_desc(state)}
-    :ets.insert(table, {key, function})
-    {:noreply, state}
-  end
-
-  def handle_cast({:set_aa, function}, state = %CM{callback_table: table}) do
-    key = {:after_all, concat_desc(state)}
-    :ets.insert(table, {key, function})
-    {:noreply, state}
-  end
-
-  def handle_cast({:set_be, function}, state = %CM{callback_table: table}) do
-    key = {:before_each, concat_desc(state)}
-    :ets.insert(table, {key, function})
-    {:noreply, state}
-  end
-
-  def handle_cast({:set_ae, function}, state = %CM{callback_table: table}) do
-    key = {:after_each, concat_desc(state)}
-    :ets.insert(table, {key, function})
-    {:noreply, state}
+  Enum.each @types_and_set_signs, fn {callback_type, cast_sign} ->
+    def handle_cast({unquote(cast_sign), function}, state = %CM{callback_table: table}) do
+      :ets.insert(table, {{unquote(callback_type), concat_desc(state)}, function})
+      {:noreply, state}
+    end
   end
 
   def handle_cast(:reset, state = %CM{callback_table: table}) do
@@ -109,31 +80,12 @@ defmodule Ensul.ContextManager do
     {:reply, concat_desc(state), state}
   end
 
-  def handle_call(:fetch_ba, _from, state = %CM{callback_table: table}) do
-    case :ets.lookup(table, {:before_all, concat_desc(state)}) do
-      [] -> {:reply, nil, state}
-      [{_, callback}] -> {:reply, callback, state}
-    end
-  end
-
-  def handle_call(:fetch_aa, _from, state = %CM{callback_table: table}) do
-    case :ets.lookup(table, {:after_all, concat_desc(state)}) do
-      [] -> {:reply, nil, state}
-      [{_, callback}] -> {:reply, callback, state}
-    end
-  end
-
-  def handle_call(:fetch_be, _from, state = %CM{callback_table: table}) do
-    case :ets.lookup(table, {:before_each, concat_desc(state)}) do
-      [] -> {:reply, nil, state}
-      [{_, callback}] -> {:reply, callback, state}
-    end
-  end
-
-  def handle_call(:fetch_ae, _from, state = %CM{callback_table: table}) do
-    case :ets.lookup(table, {:after_each, concat_desc(state)}) do
-      [] -> {:reply, nil, state}
-      [{_, callback}] -> {:reply, callback, state}
+  Enum.each @types_and_fetch_signs, fn {callback_type, call_sign} ->
+    def handle_call(unquote(call_sign), _from, state = %CM{callback_table: table}) do
+      case :ets.lookup(table, {unquote(callback_type), concat_desc(state)}) do
+        [] -> {:reply, nil, state}
+        [{_, callback}] -> {:reply, callback, state}
+      end
     end
   end
 
