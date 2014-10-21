@@ -54,27 +54,13 @@ defmodule Ensul.DSL do
     end
   end
 
-  defmacro before_all(block) do
-    quote do
-      Ensul.ContextManager.set_callback(:before_all, unquote(block))
-    end
-  end
-
-  defmacro after_all(block) do
-    quote do
-      Ensul.ContextManager.set_callback(:after_all, unquote(block))
-    end
-  end
-
-  defmacro before_each(block) do
-    quote do
-      Ensul.ContextManager.set_callback(:before_each, unquote(block))
-    end
-  end
-
-  defmacro after_each(block) do
-    quote do
-      Ensul.ContextManager.set_callback(:after_each, unquote(block))
+  [:before_all, :after_all, :before_each, :after_each]
+  |> Enum.each fn (name) ->
+    defmacro unquote(name)(do: block) do
+      name = unquote(name)
+      quote do
+        Ensul.ContextManager.set_callback(unquote(name), fn -> unquote(block) end)
+      end
     end
   end
 end
