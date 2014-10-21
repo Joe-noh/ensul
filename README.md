@@ -6,20 +6,20 @@
 defmodule MyModuleTest do
   use Ensul
 
-  before_all fn ->
+  before_all do
     IO.puts "before all"
   end
 
-  after_all fn ->
+  after_all do
     IO.puts "after all"
   end
 
   describe "MyModule" do
-    before_each fn ->
+    before_each do
       IO.puts "before each"
     end
 
-    after_each fn ->
+    after_each do
       IO.puts "after each"
     end
 
