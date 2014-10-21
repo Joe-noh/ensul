@@ -1,13 +1,13 @@
 defmodule DSLTest do
   use ExUnit.Case
 
-  alias Ensul.DSL, as: D
+  use Ensul
   alias Ensul.ContextManager, as: CM
-  require D
+
   import TestHelper
 
   test "describe" do
-    expanded = macro_to_code(D.describe "it", do: "is")
+    expanded = macro_to_code(describe "it", do: "is")
 
     assert expanded =~ """
       case(Ensul.ContextManager.fetch_callback(:before_all)) do
@@ -41,7 +41,7 @@ defmodule DSLTest do
   end
 
   test "it" do
-    expanded = macro_to_code(D.it "behave", do: "like this")
+    expanded = macro_to_code(it "behave", do: "like this")
 
     assert expanded =~ """
       case(Ensul.ContextManager.fetch_callback(:before_each)) do
@@ -65,52 +65,46 @@ defmodule DSLTest do
   end
 
   test "aliases of describe" do
-    expanded = macro_to_code(D.describe "it", do: "is")
+    expanded = macro_to_code(describe "it", do: "is")
 
-    assert expanded == macro_to_code(D.context    "it", do: "is")
-    assert expanded == macro_to_code(D.facts      "it", do: "is")
-    assert expanded == macro_to_code(D.about      "it", do: "is")
-    assert expanded == macro_to_code(D.concerning "it", do: "is")
+    assert expanded == macro_to_code(context    "it", do: "is")
+    assert expanded == macro_to_code(facts      "it", do: "is")
+    assert expanded == macro_to_code(about      "it", do: "is")
+    assert expanded == macro_to_code(concerning "it", do: "is")
   end
 
   test "aliases of it" do
-    expanded = macro_to_code(D.it "is", do: "that")
+    expanded = macro_to_code(it "is", do: "that")
 
-    assert expanded == macro_to_code(D.fact      "is", do: "that")
-    assert expanded == macro_to_code(D.make_sure "is", do: "that")
-    assert expanded == macro_to_code(D.see_if    "is", do: "that")
-    assert expanded == macro_to_code(D.verify    "is", do: "that")
+    assert expanded == macro_to_code(fact      "is", do: "that")
+    assert expanded == macro_to_code(make_sure "is", do: "that")
+    assert expanded == macro_to_code(see_if    "is", do: "that")
+    assert expanded == macro_to_code(verify    "is", do: "that")
   end
 
   test "before_all" do
     CM.reset
 
-    expected1 = fn -> 1+1 end
-    D.before_all expected1
+    before_all do: 1
 
-    D.describe "something" do
-      expected2 = fn -> 2+2 end
-      D.before_all expected2
-
-      assert expected2 == CM.fetch_callback(:before_all)
+    describe "something" do
+      before_all do: 2
+      assert CM.fetch_callback(:before_all).() == 2
     end
 
-    assert expected1 == CM.fetch_callback(:before_all)
+    assert CM.fetch_callback(:before_all).() == 1
   end
 
   test "after_all" do
     CM.reset
 
-    expected1 = fn -> 1+1 end
-    D.after_all expected1
+    after_all do: 1
 
-    D.describe "something" do
-      expected2 = fn -> 2+2 end
-      D.after_all expected2
-
-      assert expected2 == CM.fetch_callback(:after_all)
+    describe "something" do
+      after_all do: 2
+      assert CM.fetch_callback(:after_all).() == 2
     end
 
-    assert expected1 == CM.fetch_callback(:after_all)
+    assert CM.fetch_callback(:after_all).() == 1
   end
 end
